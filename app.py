@@ -1,13 +1,15 @@
 import streamlit as st
 import google.generativeai as genai
 from datetime import datetime
-from dotenv import load_dotenv
 import os
 
-# --- CONFIGURATION: PASTE YOUR KEY HERE ---
-# Replace the string below with your actual API key
-load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# --- AUTHENTICATION ---
+try:
+    # This loads the key from Streamlit Cloud's secret storage
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+except (FileNotFoundError, KeyError):
+    st.error("Please set your GEMINI_API_KEY in Streamlit Secrets.")
+    st.stop()
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -176,3 +178,4 @@ st.markdown(
     "</div>", 
     unsafe_allow_html=True
 )
+
