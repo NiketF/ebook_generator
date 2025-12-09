@@ -13,7 +13,7 @@ except (FileNotFoundError, KeyError):
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="HR E-Book Generator",
+    page_title="E-Book Generator",
     page_icon="📘",
     layout="wide"
 )
@@ -178,5 +178,6 @@ st.markdown(
     "</div>", 
     unsafe_allow_html=True
 )
+
 
 
