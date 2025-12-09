@@ -1,7 +1,13 @@
 import streamlit as st
 import google.generativeai as genai
 from datetime import datetime
+from dotenv import load_dotenv
 import os
+
+# --- CONFIGURATION: PASTE YOUR KEY HERE ---
+# Replace the string below with your actual API key
+load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -10,29 +16,36 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- AUTHENTICATION LOGIC (Cloud Compatible) ---
-# This looks for the key in Streamlit's secure storage
-try:
-    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
-except (FileNotFoundError, KeyError):
-    # Fallback for local testing if secrets.toml isn't set up
-    # But for cloud deployment, the try block above is what matters
-    st.error("⚠️ Security Alert: API Key not found. Please set GEMINI_API_KEY in Streamlit Secrets.")
-    st.stop()
-
 # --- CUSTOM CSS FOR APP UI ---
 st.markdown("""
 <style>
-    .reportview-container { background: #f5f5f5; }
-    .main-header { font-family: 'Helvetica Neue', sans-serif; color: #2c3e50; font-weight: 700; }
-    .stButton>button { background-color: #2c3e50; color: white; border-radius: 5px; height: 3em; width: 100%; font-weight: bold; }
-    .stButton>button:hover { background-color: #34495e; border: 1px solid white; }
+    .reportview-container {
+        background: #f5f5f5;
+    }
+    .main-header {
+        font-family: 'Helvetica Neue', sans-serif;
+        color: #2c3e50;
+        font-weight: 700;
+    }
+    .stButton>button {
+        background-color: #2c3e50;
+        color: white;
+        border-radius: 5px;
+        height: 3em;
+        width: 100%;
+        font-weight: bold;
+    }
+    .stButton>button:hover {
+        background-color: #34495e;
+        border: 1px solid white;
+    }
+    /* Hide the deploy button if running locally to look cleaner */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- SIDEBAR ---
+# --- SIDEBAR (Cleaned up, no key input) ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=50)
     st.title("Settings")
@@ -51,19 +64,38 @@ def build_prompt(community):
     
     **CONSTRAINTS:**
     1. NO storytelling, NO metaphors, NO fictional scenarios.
-    2. NO conversational filler.
+    2. NO conversational filler (e.g., "Let's dive in").
     3. Output MUST be valid, standalone HTML5 code with embedded CSS.
-    4. CSS: Serif fonts for body, distinct headers, good line-height.
+    4. The CSS must ensure the document looks like a professional whitepaper (Serif fonts for body, distinct headers, good line-height, clear margins).
     
-    **REQUIRED E-BOOK STRUCTURE:**
-    1. PREFACE, 2. TABLE OF CONTENTS, 3. INTRODUCTION, 4. INDUSTRY EVALUATION,
-    5. ROLES, 6. SKILLS, 7. 10-YEAR GROWTH OUTLOOK, 8. HOW TO PREPARE,
-    9. INTERPERSONAL SKILLS, 10. ROADMAP, 11. EXAMPLE PROJECTS,
-    12. CERTIFICATIONS, 13. COMPANY EXAMPLES, 14. SALARY, 15. CONCLUSION, 16. APPENDIX.
+    **INTERNAL MINDSET (Do not explicitly state this, but embody it):**
+    - What is the Industry? -> Insights, trends.
+    - What is it for Me? -> Roles, specific skills.
+    - How do I enter? -> Actionable roadmaps.
+
+    **REQUIRED E-BOOK STRUCTURE (Strictly follow this order):**
+    1. PREFACE (Brief executive summary)
+    2. TABLE OF CONTENTS (Hyperlinked internally)
+    3. INTRODUCTION (Definition and scope of {community})
+    4. INDUSTRY EVALUATION (Market size, demand, global impact)
+    5. ROLES (Detailed job titles and hierarchies)
+    6. SKILLS (Hard and Soft skills matrix)
+    7. 10-YEAR GROWTH OUTLOOK (Future trends, AI impact)
+    8. HOW TO PREPARE (Prerequisites and mindset)
+    9. INTERPERSONAL & BEHAVIORAL SKILLS (Communication, leadership)
+    10. LEARNING CURVE & ROADMAP (0-6 months, 6-12 months, 1-3 years)
+    11. EXAMPLE PROJECTS (3 specific, real-world portfolio projects with descriptions)
+    12. CERTIFICATIONS / COURSES / TOOLS (Specific names of tools and credentials)
+    13. COMPANY EXAMPLES (Top tier, mid-tier, and startups hiring {community})
+    14. SALARY RANGES & PERKS (Entry, Mid, Senior levels)
+    15. CONCLUSION (Final actionable advice)
+    16. APPENDIX & TEMPLATES (Checklists, resume keywords)
 
     **HTML STYLING REQUIREMENTS:**
+    - Use a clean font-family (e.g., 'Merriweather', serif for text; 'Arial', sans-serif for headers).
     - Use <h2>, <h3> for sections.
-    - Use <ul> and <li> for lists.
+    - Use <ul> and <li> for lists to make it scannable.
+    - Use <div style="background-color: #f0f2f6; padding: 15px; border-left: 5px solid #2c3e50; margin: 10px 0;"> for key takeaways.
     - Do NOT include markdown blocks (```html). Just return the raw HTML code.
     """
 
@@ -74,7 +106,7 @@ st.markdown("Generate comprehensive, industry-standard guides for any profession
 col1, col2 = st.columns([2, 1])
 
 with col1:
-    target_community = st.text_input("Target Community / Job Role", placeholder="e.g., Data Scientists, Nursing Staff")
+    target_community = st.text_input("Target Community / Job Role", placeholder="e.g., Data Scientists, Full Stack Developers, Nursing Staff")
 
 with col2:
     st.write("") # Spacer
@@ -83,15 +115,17 @@ with col2:
 
 # --- GENERATION PROCESS ---
 if generate_btn:
-    if not target_community:
+    if GEMINI_API_KEY == "YOUR_ACTUAL_API_KEY_HERE" or not GEMINI_API_KEY:
+        st.error("⚠️ API Key Error: Please replace 'YOUR_ACTUAL_API_KEY_HERE' in the code with your real Gemini API key.")
+    elif not target_community:
         st.warning("Please specify a target community.")
     else:
         try:
             # 1. Configure Gemini
             genai.configure(api_key=GEMINI_API_KEY)
             
-            # Using 1.5-flash as 2.5 is not yet standard/stable for API
-            model = genai.GenerativeModel('gemini-1.5-flash') 
+            # Using Gemini 1.5 Pro or Flash for larger context window
+            model = genai.GenerativeModel('gemini-2.5-flash') 
 
             # 2. UI Feedback
             status_text = st.empty()
@@ -109,6 +143,8 @@ if generate_btn:
             
             # 4. Process Response
             ebook_content = response.text
+            
+            # Strip markdown code blocks if the model accidentally includes them
             ebook_content = ebook_content.replace("```html", "").replace("```", "")
             
             progress_bar.progress(100)
@@ -117,6 +153,7 @@ if generate_btn:
             # 5. Display & Download
             st.divider()
             
+            # Create a download button
             st.download_button(
                 label="📥 Download E-Book as HTML",
                 data=ebook_content,
@@ -124,6 +161,7 @@ if generate_btn:
                 mime="text/html"
             )
 
+            # Preview Section
             with st.expander("📖 Preview E-Book Content", expanded=True):
                 st.components.v1.html(ebook_content, height=800, scrolling=True)
 
