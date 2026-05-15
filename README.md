@@ -1,6 +1,4 @@
-Based on the Online Assessment (OA) requirements to provide a clear `README.md` that explains the project's purpose, technical decisions, and installation steps, here is a professional README tailored for your E-Book Generator repository.
 
----
 
 # Professional E-Book Generator
 
